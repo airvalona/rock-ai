@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  rock-ai:
+    build: .
+    container_name: rock_ai_gateway
+    restart: always
+    ports:
+      - "8787:8787"
+    volumes:
+      - rock_data:/root/.rock
+    environment:
+      - PYTHONUNBUFFERED=1
+
+volumes:
+  rock_data:
