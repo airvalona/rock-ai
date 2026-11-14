@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>rock.ai - Autonomous Multi-Agent Workspace</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              500: '#10b981',
+              600: '#059669',
+              900: '#064e3b',
+            },
+            dark: {
+              900: '#0b0f17',
+              800: '#111827',
+              700: '#1f2937',
+              600: '#374151'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0b0f17; }
+    ::-webkit-scrollbar-thumb { background: #1f2937; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #374151; }
+    .pulse-glow { animation: pulseGlow 2s infinite; }
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 1; filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.6)); }
+      50% { opacity: 0.6; filter: drop-shadow(0 0 2px rgba(16, 185, 129, 0.2)); }
+    }
+  </style>
+</head>
+<body class="bg-dark-900 text-gray-100 font-sans h-screen flex overflow-hidden antialiased">
+
+  <!-- Left Sidebar: Fleet Roster -->
+  <aside class="w-72 bg-dark-800 border-r border-dark-700 flex flex-col justify-between select-none">
+    <div class="p-4 flex flex-col h-full">
+      <div class="flex items-center space-x-3 pb-4 border-b border-dark-700">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-cyan-500 flex items-center justify-center text-xl shadow-lg shadow-brand-900/40">
+          🪨
+        </div>
+        <div>
+          <h1 class="font-bold text-lg text-white tracking-wide">rock.ai</h1>
+          <div class="flex items-center space-x-1.5 text-xs text-brand-500 font-medium">
+            <span class="w-2 h-2 rounded-full bg-brand-500 pulse-glow"></span>
+            <span>Fleet Active 24/7</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Agent List -->
+      <div class="flex-1 overflow-y-auto mt-4 pr-1">
+        <div class="flex items-center justify-between text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+          <span>Active Roster</span>
+          <span id="agentCount" class="bg-dark-700 text-gray-300 px-1.5 py-0.5 rounded text-[10px]">4</span>
+        </div>
+        <div id="agentRosterList" class="space-y-1.5">
+          <!-- Populated dynamically via JS -->
+        </div>
+      </div>
+
+      <!-- Bottom Actions -->
+      <div class="pt-4 border-t border-dark-700">
+        <button onclick="openAgentModal()" class="w-full bg-gradient-to-r from-brand-600 to-emerald-600 hover:from-brand-500 hover:to-emerald-500 text-white text-sm font-semibold py-2 px-3 rounded-lg shadow-md flex items-center justify-center space-x-2 transition">
+          <span>+ Add Specialist</span>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Center: Live Workspace Feed -->
+  <main class="flex-1 flex flex-col bg-dark-900 overflow-hidden relative">
+    <!-- Top Bar -->
+    <header class="h-14 border-b border-dark-700 px-6 flex items-center justify-between bg-dark-800/80 backdrop-blur z-10">
+      <div class="flex items-center space-x-3">
+        <span class="text-sm font-semibold text-white">Autonomous Mission Workspace</span>
+        <span class="text-xs bg-dark-700 text-cyan-400 border border-cyan-500/20 px-2 py-0.5 rounded-full font-mono">Live Multi-Agent Stream</span>
+      </div>
+      <div class="flex items-center space-x-3 text-xs">
+        <button onclick="toggleInspector()" class="px-2.5 py-1 bg-dark-700 hover:bg-dark-600 text-gray-300 rounded border border-dark-600 transition flex items-center space-x-1">
+          <span>📊 Inspector</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Message & Debate Stream -->
+    <div id="chatFeed" class="flex-1 overflow-y-auto p-6 space-y-4">
+      <!-- Welcome Card -->
+      <div class="bg-dark-800/80 border border-dark-700 rounded-xl p-5 shadow-lg">
+        <div class="flex items-center space-x-2 text-brand-500 font-semibold text-sm mb-1">
+          <span>🚀</span>
+          <span>Fleet Connected and Synchronized</span>
+        </div>
+        <p class="text-gray-300 text-sm leading-relaxed">
+          Welcome to the <strong>rock.ai</strong> multi-agent command center. You can chat with your team, assign deep missions, or instruct the <strong>Captain</strong> to spawn new specialized coworker agents on the fly.
+        </p>
+        <div class="mt-3 flex flex-wrap gap-2 text-xs">
+          <span class="px-2 py-1 bg-dark-700 rounded text-gray-300">Try: <em>"Captain, create an agent named Copywriter"</em></span>
+          <span class="px-2 py-1 bg-dark-700 rounded text-gray-300">Or: <em>"@researcher find latest AI news"</em></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Status Pill when Debating -->
+    <div id="liveActivityIndicator" class="hidden px-6 py-2 bg-dark-800/90 border-t border-dark-700 flex items-center space-x-2 text-xs text-brand-400">
+      <svg class="animate-spin h-3.5 w-3.5 text-brand-500" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+      </svg>
+      <span id="liveStatusText">Agents collaborating...</span>
+    </div>
+
+    <!-- Input Bar -->
+    <div class="p-4 bg-dark-800 border-t border-dark-700">
+      <form id="chatForm" onsubmit="sendMessage(event)" class="flex items-center space-x-3">
+        <input 
+          type="text" 
+          id="chatInput" 
+          placeholder="Ask the team, tag @agent, or ask Captain to spawn a specialist..." 
+          class="flex-1 bg-dark-900 border border-dark-600 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 rounded-xl px-4 py-3 text-sm text-gray-100 placeholder-gray-500 outline-none transition"
+          autocomplete="off"
+        />
+        <button 
+          type="submit" 
+          class="bg-brand-600 hover:bg-brand-500 text-white font-medium px-5 py-3 rounded-xl text-sm transition shadow-md shadow-brand-900/30 flex items-center space-x-1"
+        >
+          <span>Send</span>
+          <span>→</span>
+        </button>
+      </form>
+    </div>
+  </main>
+
+  <!-- Right Sidebar: Live Activity Inspector -->
+  <aside id="inspectorPanel" class="w-80 bg-dark-800 border-l border-dark-700 flex flex-col select-none transition-all duration-300">
+    <div class="p-4 border-b border-dark-700 flex items-center justify-between">
+      <span class="text-xs font-bold text-gray-300 uppercase tracking-wider">Activity Inspector</span>
+      <span class="text-[10px] bg-dark-700 text-brand-400 px-2 py-0.5 rounded font-mono">Real-Time</span>
+    </div>
+
+    <!-- Inspector Tabs -->
+    <div class="flex border-b border-dark-700 text-xs">
+      <button onclick="switchTab('plan')" id="tab-plan" class="flex-1 py-2 font-medium border-b-2 border-brand-500 text-white text-center">Plan</button>
+      <button onclick="switchTab('research')" id="tab-research" class="flex-1 py-2 font-medium border-b-2 border-transparent text-gray-400 hover:text-gray-200 text-center">Research</button>
+      <button onclick="switchTab('audit')" id="tab-audit" class="flex-1 py-2 font-medium border-b-2 border-transparent text-gray-400 hover:text-gray-200 text-center">Audit</button>
+    </div>
+
+    <!-- Inspector Content -->
+    <div class="flex-1 p-4 overflow-y-auto font-mono text-xs text-gray-300 space-y-3">
+      <div id="inspectorContent" class="whitespace-pre-wrap leading-relaxed text-gray-400">
+        Waiting for active mission...
+      </div>
+    </div>
+  </aside>
+
+  <!-- Modal: Create Custom Agent -->
+  <div id="agentModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-dark-800 border border-dark-700 rounded-2xl w-full max-w-md p-6 shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-dark-700 mb-4">
+        <h3 class="font-bold text-white text-base">Add New Agent Specialist</h3>
+        <button onclick="closeAgentModal()" class="text-gray-400 hover:text-white">&times;</button>
+      </div>
+      <form id="createAgentForm" onsubmit="createCustomAgent(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-300 uppercase mb-1">Agent Name (Tag identifier)</label>
+          <input type="text" id="newAgentName" required placeholder="e.g. GrowthHacker, SEOExpert" class="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2 text-sm text-white focus:border-brand-500 outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-300 uppercase mb-1">Role Title</label>
+          <input type="text" id="newAgentRole" required placeholder="e.g. Viral Marketing Specialist" class="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2 text-sm text-white focus:border-brand-500 outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-300 uppercase mb-1">Custom System Instructions</label>
+          <textarea id="newAgentPrompt" rows="4" required placeholder="Describe what this agent should focus on, its personality, rules, and technical guidelines..." class="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2 text-sm text-white focus:border-brand-500 outline-none"></textarea>
+        </div>
+        <div class="flex justify-end space-x-2 pt-2">
+          <button type="button" onclick="closeAgentModal()" class="px-4 py-2 bg-dark-700 hover:bg-dark-600 text-gray-300 text-xs font-medium rounded-lg">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white text-xs font-medium rounded-lg">Create Specialist</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- JavaScript: Real-time UI & SSE -->
+  <script>
+    let activeInspectorTab = 'plan';
+    const inspectorData = { plan: '', research: '', audit: '' };
+
+    // Fetch and render Agent Roster
+    async function loadAgents() {
+      try {
+        const res = await fetch('/api/agents');
+        const agents = await res.json();
+        const container = document.getElementById('agentRosterList');
+        const countBadge = document.getElementById('agentCount');
+        countBadge.innerText = agents.length;
+        container.innerHTML = '';
+
+        const badgeColors = {
+          Captain: 'from-blue-600 to-indigo-600',
+          Researcher: 'from-emerald-600 to-teal-600',
+          Coder: 'from-amber-500 to-orange-600',
+          Contrarian: 'from-purple-600 to-pink-600'
+        };
+
+        const defaultIcons = {
+          Captain: '👑',
+          Researcher: '🔍',
+          Coder: '💻',
+          Contrarian: '🛡️'
+        };
+
+        agents.forEach(a => {
+          const isBuiltin = a.is_builtin;
+          const icon = defaultIcons[a.name] || '🤖';
+          const bgGrad = badgeColors[a.name] || 'from-cyan-600 to-blue-600';
+
+          const card = document.createElement('div');
+          card.className = "flex items-center justify-between p-2 rounded-lg bg-dark-900/60 hover:bg-dark-700/80 border border-dark-700/50 transition group";
+          card.innerHTML = `
+            <div class="flex items-center space-x-2.5 min-w-0">
+              <div class="w-7 h-7 rounded-lg bg-gradient-to-tr ${bgGrad} flex items-center justify-center text-sm shadow">
+                ${icon}
+              </div>
+              <div class="truncate">
+                <div class="text-xs font-semibold text-gray-200 group-hover:text-white truncate">@${a.name}</div>
+                <div class="text-[10px] text-gray-400 truncate">${a.role}</div>
+              </div>
+            </div>
+            ${!isBuiltin ? `<button onclick="deleteAgent('${a.name}')" class="text-gray-500 hover:text-red-400 text-xs px-1">&times;</button>` : ''}
+          `;
+          container.appendChild(card);
+        });
+      } catch (err) {
+        console.error('Failed to load agents', err);
+      }
+    }
+
+    // Connect Server-Sent Events (SSE) for Real-Time Streaming
+    function initEventStream() {
+      const source = new EventSource('/api/events/stream');
+      
+      source.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          handleLiveEvent(data);
+        } catch (e) {
+          console.error(e);
+        }
+      };
+
+      source.onerror = () => {
+        console.warn('SSE disconnected. Reconnecting in 3s...');
+        source.close();
+        setTimeout(initEventStream, 3000);
+      };
+    }
+
+    function handleLiveEvent(data) {
+      if (data.type === 'agent_created') {
+        loadAgents();
+        appendSystemNotification(`🤖 New Agent Recruited: @${data.name} (${data.role}) by ${data.created_by}`);
+      } else if (data.type === 'agent_step') {
+        showActivityIndicator(`${data.agent} is working: ${data.message.substring(0, 45)}...`);
+        appendStepCard(data.agent, data.message, data.step_type);
+
+        if (data.step_type === 'plan') inspectorData.plan = data.message;
+        if (data.step_type === 'research') inspectorData.research = data.message;
+        if (data.step_type === 'audit') inspectorData.audit = data.message;
+        updateInspectorView();
+      }
+    }
+
+    function showActivityIndicator(text) {
+      const el = document.getElementById('liveActivityIndicator');
+      document.getElementById('liveStatusText').innerText = text;
+      el.classList.remove('hidden');
+    }
+
+    function hideActivityIndicator() {
+      document.getElementById('liveActivityIndicator').classList.add('hidden');
+    }
+
+    function appendStepCard(agent, message, stepType) {
+      const feed = document.getElementById('chatFeed');
+      const card = document.createElement('div');
+      card.className = "flex space-x-3 p-3.5 bg-dark-800/90 border border-dark-700/80 rounded-xl shadow-sm text-sm";
+      
+      const colors = {
+        Captain: 'text-indigo-400 bg-indigo-950/40 border-indigo-500/20',
+        Researcher: 'text-emerald-400 bg-emerald-950/40 border-emerald-500/20',
+        Coder: 'text-amber-400 bg-amber-950/40 border-amber-500/20',
+        Contrarian: 'text-pink-400 bg-pink-950/40 border-pink-500/20'
+      };
+      const badgeStyle = colors[agent] || 'text-cyan-400 bg-cyan-950/40 border-cyan-500/20';
+
+      card.innerHTML = `
+        <div class="flex-shrink-0">
+          <span class="text-xs px-2 py-0.5 rounded font-bold border ${badgeStyle}">${agent}</span>
+        </div>
+        <div class="flex-1 text-gray-200 whitespace-pre-wrap leading-relaxed">${escapeHtml(message)}</div>
+      `;
+      feed.appendChild(card);
+      feed.scrollTop = feed.scrollHeight;
+    }
+
+    function appendUserMessage(text) {
+      const feed = document.getElementById('chatFeed');
+      const card = document.createElement('div');
+      card.className = "flex justify-end";
+      card.innerHTML = `
+        <div class="max-w-xl bg-brand-600 text-white rounded-xl rounded-tr-none px-4 py-2.5 text-sm shadow">
+          ${escapeHtml(text)}
+        </div>
+      `;
+      feed.appendChild(card);
+      feed.scrollTop = feed.scrollHeight;
+    }
+
+    function appendSystemNotification(text) {
+      const feed = document.getElementById('chatFeed');
+      const notif = document.createElement('div');
+      notif.className = "text-center my-2 text-xs font-mono text-cyan-400";
+      notif.innerText = text;
+      feed.appendChild(notif);
+      feed.scrollTop = feed.scrollHeight;
+    }
+
+    async function sendMessage(e) {
+      e.preventDefault();
+      const input = document.getElementById('chatInput');
+      const text = input.value.trim();
+      if (!text) return;
+
+      appendUserMessage(text);
+      input.value = '';
+      showActivityIndicator('Agents processing...');
+
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text })
+        });
+        const data = await res.json();
+        hideActivityIndicator();
+        appendStepCard(data.agent, data.reply, 'response');
+        loadAgents(); // Refresh in case an agent was spawned
+      } catch (err) {
+        hideActivityIndicator();
+        appendStepCard('System', 'Error communicating with team: ' + err.message, 'error');
+      }
+    }
+
+    async function createCustomAgent(e) {
+      e.preventDefault();
+      const name = document.getElementById('newAgentName').value.trim();
+      const role = document.getElementById('newAgentRole').value.trim();
+      const prompt = document.getElementById('newAgentPrompt').value.trim();
+
+      try {
+        const res = await fetch('/api/agents', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, role, system_prompt: prompt })
+        });
+        if (res.ok) {
+          closeAgentModal();
+          loadAgents();
+          appendSystemNotification(`✓ Agent @${name} successfully registered.`);
+        }
+      } catch (err) {
+        alert('Failed to create agent: ' + err.message);
+      }
+    }
+
+    async function deleteAgent(name) {
+      if (!confirm(`Are you sure you want to delete @${name}?`)) return;
+      await fetch(`/api/agents/${name}`, { method: 'DELETE' });
+      loadAgents();
+    }
+
+    function switchTab(tab) {
+      activeInspectorTab = tab;
+      ['plan', 'research', 'audit'].forEach(t => {
+        const btn = document.getElementById('tab-' + t);
+        if (t === tab) {
+          btn.className = "flex-1 py-2 font-medium border-b-2 border-brand-500 text-white text-center";
+        } else {
+          btn.className = "flex-1 py-2 font-medium border-b-2 border-transparent text-gray-400 hover:text-gray-200 text-center";
+        }
+      });
+      updateInspectorView();
+    }
+
+    function updateInspectorView() {
+      const el = document.getElementById('inspectorContent');
+      el.innerText = inspectorData[activeInspectorTab] || `No ${activeInspectorTab} data recorded yet for current session.`;
+    }
+
+    function toggleInspector() {
+      const el = document.getElementById('inspectorPanel');
+      el.classList.toggle('hidden');
+    }
+
+    function openAgentModal() {
+      document.getElementById('agentModal').classList.remove('hidden');
+    }
+
+    function closeAgentModal() {
+      document.getElementById('agentModal').classList.add('hidden');
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // Initialize on load
+    window.addEventListener('DOMContentLoaded', () => {
+      loadAgents();
+      initEventStream();
+    });
+  </script>
+</body>
+</html>

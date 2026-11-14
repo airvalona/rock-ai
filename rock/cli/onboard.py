@@ -97,7 +97,7 @@ def run_onboarding():
     # Step 5: Save Configuration
     cfg.save()
 
-    console.print("\n[bold green]✓ Configuration successfully saved to ~/.rock/config.json![/bold green]\n")
+    console.print("\n[bold green][OK] Configuration successfully saved to ~/.rock/config.json![/bold green]\n")
     console.print(Panel(
         "[bold cyan]Quickstart Commands:[/bold cyan]\n"
         "• [bold white]rock chat[/bold white]          - Chat with your agent team in terminal\n"

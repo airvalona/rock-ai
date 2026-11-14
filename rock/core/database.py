@@ -23,6 +23,15 @@ class CronJobRecord(SQLModel, table=True):
     enabled: bool = True
     last_run: Optional[datetime.datetime] = None
 
+class AgentRecord(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(index=True, unique=True)
+    role: str
+    system_prompt: str
+    model: Optional[str] = None
+    created_by: str = "user"  # "user" or "captain"
+    created_at: datetime.datetime = Field(default_factory=utc_now)
+
 class ChatRecord(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     session_id: str = "default"
@@ -83,3 +92,50 @@ class DatabaseManager:
         with Session(self.engine) as session:
             statement = select(CronJobRecord)
             return list(session.exec(statement).all())
+
+    def save_agent(
+        self,
+        name: str,
+        role: str,
+        system_prompt: str,
+        model: Optional[str] = None,
+        created_by: str = "user"
+    ) -> AgentRecord:
+        with Session(self.engine) as session:
+            statement = select(AgentRecord).where(AgentRecord.name == name)
+            existing = session.exec(statement).first()
+            if existing:
+                existing.role = role
+                existing.system_prompt = system_prompt
+                existing.model = model
+                session.add(existing)
+                session.commit()
+                session.refresh(existing)
+                return existing
+            else:
+                agent = AgentRecord(
+                    name=name,
+                    role=role,
+                    system_prompt=system_prompt,
+                    model=model,
+                    created_by=created_by
+                )
+                session.add(agent)
+                session.commit()
+                session.refresh(agent)
+                return agent
+
+    def list_agents(self) -> List[AgentRecord]:
+        with Session(self.engine) as session:
+            statement = select(AgentRecord).order_by(AgentRecord.name.asc())
+            return list(session.exec(statement).all())
+
+    def delete_agent(self, name: str) -> bool:
+        with Session(self.engine) as session:
+            statement = select(AgentRecord).where(AgentRecord.name == name)
+            agent = session.exec(statement).first()
+            if agent:
+                session.delete(agent)
+                session.commit()
+                return True
+            return False

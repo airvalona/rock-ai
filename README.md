@@ -88,14 +88,33 @@ rock onboard
 
 | Command | Description |
 | :--- | :--- |
+| `rock ui` | Launch GrokBot-style Localhost Visual Workspace (`http://localhost:8787`) |
 | `rock onboard` | Run the interactive setup wizard |
 | `rock chat` | Start interactive terminal chat with the agent team |
 | `rock task "<objective>"` | Run full 4-agent debate pipeline on a specific goal |
 | `rock team` | Inspect the agent roster and model assignments |
+| `rock agent list` | List custom registered agent specialists |
+| `rock agent create` | Register a custom agent with custom instructions |
+| `rock agent delete <name>`| Remove a custom agent specialist |
 | `rock daemon start` | Launch the 24/7 background gateway daemon |
 | `rock cron list` | View scheduled recurring agent jobs |
 | `rock cron add <name> <expr> <goal>` | Register an autonomous cron job |
 | `rock doctor` | Run system and configuration diagnostics |
+
+---
+
+### 4. Dynamic Meta-Agent Spawning
+
+You can instruct the **Captain** directly in plain language to create and recruit new agents on the fly:
+
+```
+You > Captain, create an agent named Copywriter who writes viral marketing hooks
+Captain > 🚀 New Agent Recruited & Activated!
+          I have created and registered @Copywriter to our fleet roster.
+          • Role: Viral Marketing Specialist
+```
+
+The new agent is immediately saved to the persistent SQLite database, appears in the `rock ui` sidebar, and can be tagged with `@Copywriter` at any time!
 
 ---
 

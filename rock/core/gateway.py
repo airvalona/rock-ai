@@ -1,7 +1,11 @@
 import asyncio
+import json
 import threading
-from typing import Optional
-from fastapi import FastAPI
+from pathlib import Path
+from typing import Optional, List, Dict, Any
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import HTMLResponse, StreamingResponse
+from pydantic import BaseModel
 import uvicorn
 from .config import RockConfig
 from .database import DatabaseManager
@@ -16,41 +20,67 @@ except ImportError:
     TELEGRAM_AVAILABLE = False
 
 app = FastAPI(title="rock.ai 24/7 Gateway", version="0.1.0")
+_default_service: Optional["GatewayService"] = None
+
+def get_gateway_service() -> "GatewayService":
+    global _default_service
+    if _default_service is None:
+        _default_service = GatewayService()
+    return _default_service
+
+# Request schemas
+class ChatRequest(BaseModel):
+    message: str
+
+class TaskRequest(BaseModel):
+    goal: str
+
+class CreateAgentRequest(BaseModel):
+    name: str
+    role: str
+    system_prompt: str
+    model: Optional[str] = None
 
 class GatewayService:
     """
     Central 24/7 background daemon handling REST healthchecks,
-    autonomous cron scheduling, and Telegram mobile control.
+    autonomous cron scheduling, GrokBot visual web UI, and Telegram mobile control.
     """
 
     def __init__(self, config: Optional[RockConfig] = None):
         self.config = config or RockConfig.load()
         self.db = DatabaseManager()
-        self.team = AgentTeam(config=self.config)
+        self.team = AgentTeam(config=self.config, db=self.db)
         self.scheduler = AutonomousScheduler(db=self.db, team=self.team, config=self.config)
+        self.subscribers: List[asyncio.Queue] = []
+        self._loop: Optional[asyncio.AbstractEventLoop] = None
+
+        # Wire event listener from team to SSE subscribers
+        self.team.on_event = self._broadcast_event_sync
+
+    def _broadcast_event_sync(self, event: Dict[str, Any]):
+        if self._loop and self._loop.is_running():
+            asyncio.run_coroutine_threadsafe(self._broadcast_event(event), self._loop)
+
+    async def _broadcast_event(self, event: Dict[str, Any]):
+        dead = []
+        for q in self.subscribers:
+            try:
+                await q.put(event)
+            except Exception:
+                dead.append(q)
+        for d in dead:
+            if d in self.subscribers:
+                self.subscribers.remove(d)
 
     def start(self, host: str = "0.0.0.0", port: Optional[int] = None):
+        global _default_service
+        _default_service = self
         target_port = port or self.config.gateway_port
-
-        # Start autonomous background scheduler
         self.scheduler.start()
 
-        # Start Telegram mobile bridge if configured
         if self.config.telegram_token and TELEGRAM_AVAILABLE:
             threading.Thread(target=self._run_telegram_bot, daemon=True).start()
-
-        # Define FastAPI endpoints
-        @app.get("/health")
-        def health():
-            return {"status": "ok", "service": "rock.ai gateway", "version": "0.1.0"}
-
-        @app.get("/api/tasks")
-        def get_tasks():
-            return self.db.list_tasks(limit=20)
-
-        @app.get("/api/cron")
-        def get_cron():
-            return self.db.list_cron_jobs()
 
         print(f"[rock.ai] 24/7 Gateway running on http://{host}:{target_port}")
         uvicorn.run(app, host=host, port=target_port, log_level="warning")
@@ -100,3 +130,87 @@ class GatewayService:
         application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
 
         application.run_polling(close_loop=False)
+
+# Module-level Route Registrations on app
+template_path = Path(__file__).parent.parent / "ui" / "templates" / "index.html"
+
+@app.get("/", response_class=HTMLResponse)
+def serve_dashboard():
+    if template_path.exists():
+        with open(template_path, "r", encoding="utf-8") as f:
+            return f.read()
+    return "<html><body><h1>rock.ai Dashboard Template Not Found</h1></body></html>"
+
+@app.get("/health")
+def health():
+    return {"status": "ok", "service": "rock.ai gateway", "version": "0.1.0"}
+
+@app.get("/api/agents")
+def get_agents():
+    service = get_gateway_service()
+    return service.team.list_roster()
+
+@app.post("/api/agents")
+def create_agent(req: CreateAgentRequest):
+    service = get_gateway_service()
+    try:
+        rec = service.team.register_custom_agent(
+            name=req.name,
+            role=req.role,
+            system_prompt=req.system_prompt,
+            model=req.model,
+            created_by="user"
+        )
+        return {"status": "created", "agent": rec.name}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.delete("/api/agents/{name}")
+def delete_agent(name: str):
+    service = get_gateway_service()
+    success = service.team.delete_custom_agent(name)
+    if not success:
+        raise HTTPException(status_code=400, detail="Cannot delete agent (built-in or not found)")
+    return {"status": "deleted", "name": name}
+
+@app.post("/api/chat")
+def chat_endpoint(req: ChatRequest):
+    service = get_gateway_service()
+    res = service.team.group_chat(req.message)
+    return res
+
+@app.post("/api/task")
+def task_endpoint(req: TaskRequest):
+    service = get_gateway_service()
+    task_rec = service.db.create_task(req.goal)
+    res = service.team.execute_goal(req.goal)
+    service.db.update_task_completed(task_rec.id, res["final_answer"])
+    return res
+
+@app.get("/api/tasks")
+def get_tasks():
+    service = get_gateway_service()
+    return service.db.list_tasks(limit=20)
+
+@app.get("/api/cron")
+def get_cron():
+    service = get_gateway_service()
+    return service.db.list_cron_jobs()
+
+@app.get("/api/events/stream")
+async def event_stream():
+    service = get_gateway_service()
+    queue: asyncio.Queue = asyncio.Queue()
+    service.subscribers.append(queue)
+    service._loop = asyncio.get_event_loop()
+
+    async def event_generator():
+        try:
+            while True:
+                event = await queue.get()
+                yield f"data: {json.dumps(event)}\n\n"
+        except asyncio.CancelledError:
+            if queue in service.subscribers:
+                service.subscribers.remove(queue)
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")

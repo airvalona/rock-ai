@@ -2,6 +2,9 @@ import os
 from typing import List, Dict, Any, Optional
 from ..core.config import RockConfig
 
+# Use local cost map and disable verbose debug logs
+os.environ["LITELLM_LOCAL_MODEL_COST_MAP"] = "True"
+
 try:
     import litellm
     # Suppress verbose litellm logs
