@@ -8,10 +8,14 @@ version = "0.1.0"
 description = "Autonomous 24/7 persistent multi-agent fleet (Grok Bot clone) with OpenClaw-style terminal onboarding."
 readme = "README.md"
 authors = [
-    { name = "rock.ai Contributors" }
+    { name = "airvalona" }
 ]
 license = { text = "MIT" }
 requires-python = ">=3.10"
+
+[project.urls]
+Homepage = "https://github.com/airvalona/rock-ai"
+Repository = "https://github.com/airvalona/rock-ai"
 dependencies = [
     "typer>=0.9.0",
     "rich>=13.7.0",

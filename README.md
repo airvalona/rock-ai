@@ -59,12 +59,12 @@
 
 #### Via Script (Linux / macOS):
 ```bash
-curl -fsSL https://raw.githubusercontent.com/your-username/rock-ai/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/airvalona/rock-ai/main/install.sh | bash
 ```
 
 #### Via Script (Windows PowerShell):
 ```powershell
-irm https://raw.githubusercontent.com/your-username/rock-ai/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/airvalona/rock-ai/main/install.ps1 | iex
 ```
 
 #### Via Pip:
