@@ -44,7 +44,7 @@ class CreateAgentRequest(BaseModel):
 class GatewayService:
     """
     Central 24/7 background daemon handling REST healthchecks,
-    autonomous cron scheduling, GrokBot visual web UI, and Telegram mobile control.
+    autonomous cron scheduling, visual web UI, and Telegram mobile control.
     """
 
     def __init__(self, config: Optional[RockConfig] = None):
@@ -176,16 +176,26 @@ def delete_agent(name: str):
 @app.post("/api/chat")
 def chat_endpoint(req: ChatRequest):
     service = get_gateway_service()
-    res = service.team.group_chat(req.message)
-    return res
+    try:
+        res = service.team.group_chat(req.message)
+        return res
+    except Exception as e:
+        return {"agent": "System", "reply": f"⚠️ Error: {str(e)}"}
 
 @app.post("/api/task")
 def task_endpoint(req: TaskRequest):
     service = get_gateway_service()
-    task_rec = service.db.create_task(req.goal)
-    res = service.team.execute_goal(req.goal)
-    service.db.update_task_completed(task_rec.id, res["final_answer"])
-    return res
+    try:
+        task_rec = service.db.create_task(req.goal)
+        res = service.team.execute_goal(req.goal)
+        service.db.update_task_completed(task_rec.id, res["final_answer"])
+        return res
+    except Exception as e:
+        return {
+            "goal": req.goal,
+            "final_answer": f"⚠️ Task Failed: {str(e)}",
+            "debate": {}
+        }
 
 @app.get("/api/tasks")
 def get_tasks():

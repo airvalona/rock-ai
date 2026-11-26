@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "rock-ai"
 version = "0.1.0"
-description = "Autonomous 24/7 persistent multi-agent fleet (Grok Bot clone) with OpenClaw-style terminal onboarding."
+description = "Autonomous 24/7 persistent multi-agent fleet with interactive terminal setup and visual workspace."
 readme = "README.md"
 authors = [
     { name = "airvalona" }

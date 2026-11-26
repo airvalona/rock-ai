@@ -15,7 +15,7 @@ except ImportError:
 class ModelRouter:
     """
     Universal Model Router supporting OpenAI, Anthropic, Gemini, DeepSeek,
-    xAI Grok, Ollama, and OpenRouter through a unified interface.
+    xAI, Ollama, and OpenRouter through a unified interface.
     """
 
     def __init__(self, config: Optional[RockConfig] = None):
@@ -36,7 +36,7 @@ class ModelRouter:
                 os.environ["GEMINI_API_KEY"] = provider_cfg.api_key
             elif "deepseek" in p:
                 os.environ["DEEPSEEK_API_KEY"] = provider_cfg.api_key
-            elif "grok" in p or "xai" in p:
+            elif "xai" in p or "grok" in p:
                 os.environ["XAI_API_KEY"] = provider_cfg.api_key
             elif "openrouter" in p:
                 os.environ["OPENROUTER_API_KEY"] = provider_cfg.api_key

@@ -111,7 +111,7 @@ class AgentTeam:
         on_step: Optional[Callable[[str, str], None]] = None
     ) -> Dict[str, Any]:
         """
-        Executes a goal using the Grok Bot 4-agent internal debate pipeline.
+        Executes a goal using the collaborative 4-agent internal debate pipeline.
         """
         def log(agent_name: str, message: str, step_type: str = "log"):
             if on_step:

@@ -9,7 +9,7 @@
 
 - **4-Agent Collaborative Fleet**: Includes Captain (Lead), Researcher (Web/Data), Coder (Sandbox Executor), and Contrarian (Auditor/Critic).
 - **24/7 Always-On Operation**: Runs continuously in the background via local daemon or zero-cost cloud deployment (Oracle Cloud Always Free / Docker) even when your PC is turned off.
-- **Universal Model Router**: Bring your own keys for OpenAI, Anthropic Claude, Google Gemini, DeepSeek, xAI Grok, Ollama, OpenRouter, or custom OpenAI-compatible endpoints.
+- **Universal Model Router**: Bring your own keys for OpenAI, Anthropic Claude, Google Gemini, DeepSeek, xAI, Ollama, OpenRouter, or custom OpenAI-compatible endpoints.
 - **Interactive Terminal Setup**: One-command onboarding wizard (`rock onboard`) for fast, guided configuration.
 - **Mobile Remote Bridge**: Integrated Telegram bot gateway to assign tasks, chat with agents, and receive alerts from your phone.
 - **Sandboxed Tool Execution**: Safe workspace filesystem and script execution with path protection and safety filters.
@@ -39,7 +39,7 @@
           │   Multi-Agent Team    │              │  Universal Model Hub  │
           │  • Captain            │              │  • OpenAI  • Claude   │
           │  • Researcher         │◄────────────►│  • Gemini  • DeepSeek │
-          │  • Coder              │              │  • Grok    • Ollama   │
+          │  • Coder              │              │  • xAI     • Ollama   │
           │  • Contrarian         │              │  • OpenRouter         │
           └───────────┬───────────┘              └───────────────────────┘
                       │
@@ -88,7 +88,7 @@ rock onboard
 
 | Command | Description |
 | :--- | :--- |
-| `rock ui` | Launch GrokBot-style Localhost Visual Workspace (`http://localhost:8787`) |
+| `rock ui` | Launch rock.ai Visual Workspace (`http://localhost:8787`) |
 | `rock onboard` | Run the interactive setup wizard |
 | `rock chat` | Start interactive terminal chat with the agent team |
 | `rock task "<objective>"` | Run full 4-agent debate pipeline on a specific goal |

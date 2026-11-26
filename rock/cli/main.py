@@ -26,7 +26,7 @@ console = Console()
 
 @app.command()
 def onboard():
-    """Run interactive OpenClaw-style setup wizard."""
+    """Run interactive setup wizard."""
     run_onboarding()
 
 @app.command()
@@ -71,7 +71,7 @@ def chat():
 
 @app.command()
 def task(goal: str):
-    """Run full 4-agent Grok Bot debate pipeline on a specific objective."""
+    """Run full 4-agent collaborative debate pipeline on a specific objective."""
     cfg = RockConfig.load()
     team = AgentTeam(config=cfg)
     db = DatabaseManager()
@@ -116,11 +116,11 @@ def team():
     console.print(table)
 
 @app.command()
-def ui(port: int = typer.Option(8787, help="Port to launch GrokBot visual workspace")):
-    """Launch GrokBot-style Localhost Visual Workspace in your browser."""
+def ui(port: int = typer.Option(8787, help="Port to launch visual workspace")):
+    """Launch rock.ai Visual Workspace in your browser."""
     console.print(BANNER)
     console.print(Panel(
-        f"[bold green]Starting GrokBot-Style Localhost Workspace on http://localhost:{port}[/bold green]\n"
+        f"[bold green]Starting rock.ai Visual Workspace on http://localhost:{port}[/bold green]\n"
         "Opening your default browser automatically...",
         border_style="cyan"
     ))

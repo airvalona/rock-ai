@@ -38,10 +38,24 @@ class BaseAgent:
 
         messages.append({"role": "user", "content": prompt})
 
-        reply = self.router.complete(
-            messages=messages,
-            model=self.model
-        )
+        try:
+            reply = self.router.complete(
+                messages=messages,
+                model=self.model
+            )
+        except Exception as e:
+            err_msg = str(e)
+            target_model = self.model or self.router.config.default_model
+            if "api_key" in err_msg.lower() or "auth" in err_msg.lower() or "authentication" in err_msg.lower():
+                reply = (
+                    f"⚠️ **[API Key Required]**\n\n"
+                    f"Could not connect to model `{target_model}` because no valid API key was found.\n\n"
+                    f"**How to configure:**\n"
+                    f"1. Run `rock onboard` in your terminal to set your provider keys, OR\n"
+                    f"2. Add your API key directly to `~/.rock/config.json`."
+                )
+            else:
+                reply = f"⚠️ **[Error executing request with '{target_model}']**: {err_msg}"
 
         self.history.append({"role": "user", "content": prompt})
         self.history.append({"role": "assistant", "content": reply})

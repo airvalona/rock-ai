@@ -22,7 +22,7 @@ BANNER = """
 
 def run_onboarding():
     """
-    OpenClaw-style interactive terminal onboarding wizard.
+    Interactive terminal onboarding wizard.
     """
     console.print(BANNER)
     console.print(Panel("[bold green]Welcome to rock.ai Setup Wizard![/bold green]\nConfigure your persistent agent fleet in seconds.", border_style="cyan"))
@@ -45,7 +45,7 @@ def run_onboarding():
             Choice("anthropic", "Anthropic Claude (Claude 3.7 Sonnet)"),
             Choice("gemini", "Google Gemini (Gemini 2.5 Flash / Pro)"),
             Choice("deepseek", "DeepSeek (DeepSeek V3 / R1)"),
-            Choice("grok", "xAI Grok (Grok 2 / Grok Beta)"),
+            Choice("xai", "xAI (Grok 2 / Grok Beta)"),
             Choice("openrouter", "OpenRouter (Multi-model aggregator)"),
             Choice("ollama", "Local Ollama (Llama 3, Mistral, Qwen)"),
         ],
@@ -65,7 +65,7 @@ def run_onboarding():
         "anthropic": "claude-3-7-sonnet-20250219",
         "gemini": "gemini/gemini-2.5-flash",
         "deepseek": "deepseek/deepseek-chat",
-        "grok": "xai/grok-2-latest",
+        "xai": "xai/grok-2-latest",
         "openrouter": "openrouter/auto",
         "ollama": "ollama/llama3"
     }

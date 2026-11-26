@@ -10,7 +10,7 @@ WORKSPACE_DIR = DEFAULT_ROCK_DIR / "workspace"
 DB_PATH = DEFAULT_ROCK_DIR / "rock.db"
 
 class ModelConfig(BaseModel):
-    provider: str = "openai"  # openai, anthropic, gemini, deepseek, grok, ollama, openrouter
+    provider: str = "openai"  # openai, anthropic, gemini, deepseek, xai, ollama, openrouter
     model_name: str = "gpt-4o"
     api_key: Optional[str] = None
     api_base: Optional[str] = None
